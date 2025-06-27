@@ -1,3 +1,4 @@
+import chess
 import tkinter as tk
 from tkinter import ttk, messagebox
 import threading
@@ -7,7 +8,7 @@ from chess_problem_themes import THEMES, THEME_DESCRIPTIONS, THEME_MATE_DEPTHS
 def start_gui():
     root = tk.Tk()
     root.title("Chess Problem Composer")
-    root.geometry("680x450")
+    root.geometry("680x500")
     root.resizable(False, False)
 
     font_main = ("Segoe UI", 12)
@@ -50,21 +51,25 @@ def start_gui():
     theme_var.trace_add("write", update_description)
     update_description()
 
-    fen_display = tk.Text(root, height=6, width=65, font=("Courier New", 13), wrap="none", bd=1, relief="sunken")
-    fen_display.tag_configure("center", justify="center")
-    fen_display.pack(pady=(10, 5))
-    fen_display.config(state="disabled", cursor="arrow")
+    board_display = tk.Text(root, height=10, width=65, font=("Courier New", 13), wrap="none", bd=1, relief="sunken")
+    board_display.tag_configure("center", justify="center")
+    board_display.pack(pady=(5, 5))
+    board_display.config(state="disabled", cursor="arrow")
+    board_display.bind("<MouseWheel>", lambda e: "break")
+    board_display.bind("<Button-4>", lambda e: "break")
+    board_display.bind("<Button-5>", lambda e: "break")
+
 
     def disable_selection(event):
         return "break"
 
     for seq in ("<Button-1>", "<B1-Motion>", "<Control-c>", "<Control-x>", "<Control-v>"):
-        fen_display.bind(seq, disable_selection)
+        board_display.bind(seq, disable_selection)
 
     copy_btn = tk.Button(root, text="Copy FEN", font=font_main)
 
     def copy_fen():
-        text = fen_display.get("1.0", "end-1c").strip().splitlines()
+        text = board_display.get("1.0", "end-1c").strip().splitlines()
         if len(text) >= 2:
             root.clipboard_clear()
             root.clipboard_append(text[1])
@@ -84,9 +89,9 @@ def start_gui():
             return
 
         start_btn.config(state='disabled')
-        fen_display.config(state="normal")
-        fen_display.delete("1.0", "end")
-        fen_display.config(state="disabled")
+        board_display.config(state="normal")
+        board_display.delete("1.0", "end")
+        board_display.config(state="disabled")
         copy_btn.pack_forget()
 
         def run():
@@ -94,15 +99,17 @@ def start_gui():
                 fen, fitness = run_evolution(THEMES[selected])
                 def update_ui():
                     mate_in = THEME_MATE_DEPTHS.get(selected)
+                    board = chess.Board(fen)
+                    board_str = str(board)
+
                     text_block = (
-                        "\nHere is the FEN string of the composition:\n"
-                        f"{fen}\n\n"
-                        f"White to play and mate in {mate_in} moves.\n"
+                        f"{board_str}\n\n"
+                        f"White to play and mate in {mate_in} moves\n"
                     )
-                    fen_display.config(state="normal")
-                    fen_display.delete("1.0", "end")
-                    fen_display.insert("1.0", text_block, "center")
-                    fen_display.config(state="disabled")
+                    board_display.config(state="normal")
+                    board_display.delete("1.0", "end")
+                    board_display.insert("1.0", text_block, "center")
+                    board_display.config(state="disabled")
                     copy_btn.pack(pady=5)
                     start_btn.config(state='normal')
                 root.after(0, update_ui)
