@@ -59,20 +59,20 @@ def start_gui():
     board_display.bind("<Button-4>", lambda e: "break")
     board_display.bind("<Button-5>", lambda e: "break")
 
-
     def disable_selection(event):
         return "break"
 
     for seq in ("<Button-1>", "<B1-Motion>", "<Control-c>", "<Control-x>", "<Control-v>"):
         board_display.bind(seq, disable_selection)
 
+    fen_string = ""
+
     copy_btn = tk.Button(root, text="Copy FEN", font=font_main)
 
     def copy_fen():
-        text = board_display.get("1.0", "end-1c").strip().splitlines()
-        if len(text) >= 2:
+        if fen_string:
             root.clipboard_clear()
-            root.clipboard_append(text[1])
+            root.clipboard_append(fen_string)
             messagebox.showinfo("Copied", "FEN copied to clipboard!")
         else:
             messagebox.showwarning("Warning", "No FEN to copy.")
@@ -95,8 +95,11 @@ def start_gui():
         copy_btn.pack_forget()
 
         def run():
+            nonlocal fen_string
             try:
                 fen, fitness = run_evolution(THEMES[selected])
+                fen_string = fen
+
                 def update_ui():
                     mate_in = THEME_MATE_DEPTHS.get(selected)
                     board = chess.Board(fen)
@@ -112,6 +115,7 @@ def start_gui():
                     board_display.config(state="disabled")
                     copy_btn.pack(pady=5)
                     start_btn.config(state='normal')
+
                 root.after(0, update_ui)
             except Exception as e:
                 root.after(0, lambda: messagebox.showerror("Error", str(e)))
@@ -134,3 +138,4 @@ def start_gui():
 
 if __name__ == "__main__":
     start_gui()
+
