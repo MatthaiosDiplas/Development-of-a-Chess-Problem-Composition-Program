@@ -65,14 +65,14 @@ def start_gui():
     for seq in ("<Button-1>", "<B1-Motion>", "<Control-c>", "<Control-x>", "<Control-v>"):
         board_display.bind(seq, disable_selection)
 
-    fen_string = ""
+    fen_string = [""]
 
     copy_btn = tk.Button(root, text="Copy FEN", font=font_main)
 
     def copy_fen():
-        if fen_string:
+        if fen_string[0]:
             root.clipboard_clear()
-            root.clipboard_append(fen_string)
+            root.clipboard_append(fen_string[0])
             messagebox.showinfo("Copied", "FEN copied to clipboard!")
         else:
             messagebox.showwarning("Warning", "No FEN to copy.")
@@ -89,16 +89,17 @@ def start_gui():
             return
 
         start_btn.config(state='disabled')
+        theme_combo.config(state='disabled')
         board_display.config(state="normal")
         board_display.delete("1.0", "end")
         board_display.config(state="disabled")
         copy_btn.pack_forget()
+        fen_string[0] = ""  # Reset FEN storage
 
         def run():
-            nonlocal fen_string
             try:
                 fen, fitness = run_evolution(THEMES[selected])
-                fen_string = fen
+                fen_string[0] = fen
 
                 def update_ui():
                     mate_in = THEME_MATE_DEPTHS.get(selected)
@@ -115,11 +116,14 @@ def start_gui():
                     board_display.config(state="disabled")
                     copy_btn.pack(pady=5)
                     start_btn.config(state='normal')
+                    theme_combo.config(state='readonly')
 
                 root.after(0, update_ui)
+
             except Exception as e:
                 root.after(0, lambda: messagebox.showerror("Error", str(e)))
                 root.after(0, lambda: start_btn.config(state="normal"))
+                root.after(0, lambda: theme_combo.config(state='readonly'))
 
         threading.Thread(target=run, daemon=True).start()
 
@@ -138,4 +142,3 @@ def start_gui():
 
 if __name__ == "__main__":
     start_gui()
-
